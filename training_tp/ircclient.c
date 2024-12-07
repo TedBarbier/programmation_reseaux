@@ -7,6 +7,7 @@
 #include <unistd.h>
 #define MAX 80
 #define PORT 1234
+#define BUF_SIZE 512
 #define SA struct sockaddr
 
 # define NTP_TIMESTAMP_DELTA 2208988800ull
@@ -77,7 +78,7 @@ void requete_ntp(){
     }
     e=write(sockntp,&packet,sizeof(ntp_packet));
     if(e<0){
-        error("pas de write\n");
+        perror("pas de write\n");
     }
     e=read(sockntp,&packet,sizeof(ntp_packet));
     if(e<0){
@@ -122,11 +123,31 @@ int main(){
     while (buffer==0){
         printf("Enter pseudo:");
         scanf("%s",pseudo);
+        send(sockfd,pseudo,BUF_SIZE,0);
         recv(sockfd,buffer,1,0);
 
     }
     
-    requete_ntp();
+    
+    char buff[BUF_SIZE];
+    int n;
+    while (1){
+        bzero(buff, sizeof(buff));
+        printf("Enter the string:");
+        n = 0;
+        while ((buff[n++] = getchar()) != '\n');
+        requete_ntp();
+        send(sockfd, buff, sizeof(buff), 0);
+        bzero(buff, sizeof(buff));
+        recv(sockfd, buff, sizeof(buff), 0);
+        printf("From Server : %s", buff);
+        if ((strncmp(buff, "exit", 4)) == 0) {
+            printf("Client Exit...\n");
+            break;
+        }
+
+    }
+
 
    
 
